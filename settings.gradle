@@ -1,0 +1,5 @@
+rootProject.name = 'ConsulNameResolver'
+include 'consulresolver'
+include 'integration-tests'
+
+

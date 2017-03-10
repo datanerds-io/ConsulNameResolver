@@ -1,0 +1,80 @@
+group 'io.datanerds.grpc'
+version '1.0-SNAPSHOT'
+
+def grpcVersion = '1.1.2'
+def consulClientVersion = '0.13.12'
+def slf4jVersion = '1.7.21'
+
+def mainClass='io.datanerds.grpc.consulnameresolver.Client'
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.google.protobuf:protobuf-gradle-plugin:0.8.1"
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+
+    dependencies {
+        compile "io.grpc:grpc-all:${grpcVersion}"
+        compile "io.grpc:grpc-core:${grpcVersion}"
+        compile "io.grpc:grpc-netty:${grpcVersion}"
+        compile "io.grpc:grpc-protobuf:${grpcVersion}"
+        compile "io.grpc:grpc-stub:${grpcVersion}"
+        compile "com.orbitz.consul:consul-client:${consulClientVersion}"
+        compile "org.slf4j:slf4j-api:${slf4jVersion}"
+
+
+
+        testCompile "junit:junit:4.11"
+        testCompile "org.mockito:mockito-core:1.9.5"
+        testCompile 'org.awaitility:awaitility:2.0.0'
+        testCompile 'com.pszymczyk.consul:embedded-consul:0.2.3'
+    }
+
+    apply plugin: 'idea'
+
+    idea {
+        module {
+            sourceDirs += file("${projectDir}/build/generated/source/proto/main/java");
+            sourceDirs += file("${projectDir}/build/generated/source/proto/main/grpc");
+            sourceDirs += file("${projectDir}/build/generated/source/proto/test/java");
+            sourceDirs += file("${projectDir}/build/generated/source/proto/test/grpc");
+        }
+    }
+
+    apply plugin: 'com.google.protobuf'
+
+    protobuf {
+        protoc {
+            artifact = 'com.google.protobuf:protoc:3.2.0'
+        }
+        plugins {
+            grpc {
+                artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
+            }
+        }
+        generateProtoTasks {
+            all()*.plugins {
+                grpc {
+                    option 'enable_deprecated=false'
+                }
+            }
+        }
+    }
+
+
+    task execute(type:JavaExec) {
+        main = mainClass
+        classpath = sourceSets.main.runtimeClasspath
+    }
+}
