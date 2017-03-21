@@ -19,10 +19,8 @@ import java.util.UUID;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
 
 public class ConsulNameResolverTest {
     private static final Logger logger = LoggerFactory.getLogger(ConsulNameResolverTest.class);
@@ -31,7 +29,7 @@ public class ConsulNameResolverTest {
     public static final ConsulResource consulResource = new ConsulResource();
 
     @Test
-    public void checkIfConsulIsUpAndHealthy() throws Throwable {
+    public void checkIfConsulIsUpAndHealthy() throws Exception {
         await().atMost(15, SECONDS).until(() -> {
             try {
                 Consul consul = Consul.builder().withHostAndPort(HostAndPort.fromParts("localhost", consulResource
@@ -60,7 +58,7 @@ public class ConsulNameResolverTest {
         PingPongGrpc.PingPongBlockingStub blockingStub = PingPongGrpc.newBlockingStub(channel);
         PingPongProto.Ping ping = PingPongProto.Ping.newBuilder().setPing("PING").build();
         PingPongProto.Pong pong = blockingStub.pingPong(ping);
-        assertEquals("PONG-" + port + ": " + ping.getPing(), pong.getPong());
+        assertThat(String.format("PONG-%d: %s", port, ping.getPing()), is(equalTo(pong.getPong())));
         server.stop();
     }
 
@@ -73,7 +71,7 @@ public class ConsulNameResolverTest {
 
         registerConsulService(consulResource.getHttpPort(), "test_v1", port, "test_v1");
         ManagedChannel channel = ManagedChannelBuilder
-                .forTarget("consul://localhost:" + consulResource.getHttpPort() + "/test_v1")
+                .forTarget(String.format("consul://localhost:%d/%s", consulResource.getHttpPort(), "test_v1"))
                 .nameResolverFactory(
                         new ConsulNameResolverProvider()
                 )
@@ -83,7 +81,7 @@ public class ConsulNameResolverTest {
         PingPongGrpc.PingPongBlockingStub blockingStub = PingPongGrpc.newBlockingStub(channel);
         PingPongProto.Ping ping = PingPongProto.Ping.newBuilder().setPing("PING").build();
         PingPongProto.Pong pong = blockingStub.pingPong(ping);
-        assertEquals("PONG-" + port + ": " + ping.getPing(), pong.getPong());
+        assertThat(String.format("PONG-%d: %s", port, ping.getPing()), is(equalTo(pong.getPong())));
         server.stop();
     }
 
@@ -225,7 +223,7 @@ public class ConsulNameResolverTest {
         ConsulNameResolver resolver = new ConsulNameResolver(params);
         resolver.start(listener);
 
-        assertEquals(0, listener.getErrors().size());
+        assertThat(listener.getErrors(), hasSize(0));
 
         await().atMost(5, SECONDS).until(listener.getServers()::size, is(3));
 
@@ -238,7 +236,7 @@ public class ConsulNameResolverTest {
         unregisterConsulService(consulResource.getHttpPort(), id1);
         await().atMost(5, SECONDS).until(listener.getServers()::size, is(0));
 
-        assertNotEquals(0, listener.getErrors().size());
+        assertThat(listener.getErrors(), not(hasSize(0)));
         resolver.shutdown();
     }
 

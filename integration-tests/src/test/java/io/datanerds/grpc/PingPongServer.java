@@ -5,13 +5,13 @@ import io.datanerds.grpc.integrationtests.PingPongProto;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 public class PingPongServer {
-    private static final Logger logger = Logger.getLogger(PingPongServer.class.getName());
-
+    private static final Logger logger = LoggerFactory.getLogger(PingPongServer.class);
     private Server server;
     private final int port;
 

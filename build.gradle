@@ -5,8 +5,6 @@ def grpcVersion = '1.1.2'
 def consulClientVersion = '0.13.12'
 def slf4jVersion = '1.7.21'
 
-def mainClass='io.datanerds.grpc.consulnameresolver.Client'
-
 buildscript {
     repositories {
         mavenCentral()
@@ -18,6 +16,7 @@ buildscript {
 
 subprojects {
     apply plugin: 'java'
+    apply plugin: 'com.google.protobuf'
 
     repositories {
         mavenCentral()
@@ -33,26 +32,11 @@ subprojects {
         compile "com.orbitz.consul:consul-client:${consulClientVersion}"
         compile "org.slf4j:slf4j-api:${slf4jVersion}"
 
-
-
-        testCompile "junit:junit:4.11"
-        testCompile "org.mockito:mockito-core:1.9.5"
+        testCompile "junit:junit:4.12"
+        testCompile 'org.hamcrest:hamcrest-library:1.3'
         testCompile 'org.awaitility:awaitility:2.0.0'
         testCompile 'com.pszymczyk.consul:embedded-consul:0.2.3'
     }
-
-    apply plugin: 'idea'
-
-    idea {
-        module {
-            sourceDirs += file("${projectDir}/build/generated/source/proto/main/java");
-            sourceDirs += file("${projectDir}/build/generated/source/proto/main/grpc");
-            sourceDirs += file("${projectDir}/build/generated/source/proto/test/java");
-            sourceDirs += file("${projectDir}/build/generated/source/proto/test/grpc");
-        }
-    }
-
-    apply plugin: 'com.google.protobuf'
 
     protobuf {
         protoc {
@@ -72,9 +56,14 @@ subprojects {
         }
     }
 
-
-    task execute(type:JavaExec) {
-        main = mainClass
-        classpath = sourceSets.main.runtimeClasspath
+    sourceSets {
+        main {
+            proto {
+                srcDirs += file("${projectDir}/build/generated/source/proto/main/java");
+                srcDirs += file("${projectDir}/build/generated/source/proto/main/grpc");
+                srcDirs += file("${projectDir}/build/generated/source/proto/test/java");
+                srcDirs += file("${projectDir}/build/generated/source/proto/test/grpc");
+            }
+        }
     }
 }

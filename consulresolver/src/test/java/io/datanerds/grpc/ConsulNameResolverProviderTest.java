@@ -1,146 +1,104 @@
 package io.datanerds.grpc;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 public class ConsulNameResolverProviderTest {
 
-    @Before
-    public void setUp() throws Exception {
-
-    }
-
-    @After
-    public void tearDown() throws Exception {
-
-    }
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @Test
     public void basicChecks() throws Exception {
         ConsulNameResolverProvider provider = new ConsulNameResolverProvider();
         assertTrue(provider.isAvailable());
-        assertEquals(5, provider.priority());
-        assertEquals("consul", provider.getDefaultScheme());
+        assertThat(5, is(equalTo(provider.priority())));
+        assertThat("consul", is(equalTo(provider.getDefaultScheme())));
     }
 
     @Test
-    public void newNameResolver() throws Exception {
-
+    public void testSanitizeInputBadScheme() throws Exception {
+        URI input = new URI("test://localhost:1234/test_service");
+        this.thrown.expect(IllegalArgumentException.class);
+        new ConsulNameResolverProvider().validateInputURI(input);
     }
 
     @Test
-    public void splitQuery() throws Exception {
-        URI input = new URI("consul://localhost:1234/test_service");
-        Map<String, List<String>> result = new ConsulNameResolverProvider().splitQuery(input);
-
-        assertEquals(0, result.keySet().size());
+    public void testSanitizeInputBadHost() throws Exception {
+        URI input = new URI("test:///test_service");
+        this.thrown.expect(IllegalArgumentException.class);
+        new ConsulNameResolverProvider().validateInputURI(input);
     }
 
     @Test
-    public void splitQueryWithEmptyDCandTags() throws Exception {
-        URI input = new URI("consul://localhost:1234/test_service?dc=&tag=&tag=");
-        Map<String, List<String>> result = new ConsulNameResolverProvider().splitQuery(input);
-
-        assertEquals(0, result.keySet().size());
+    public void testSanitizeInputBadPort() throws Exception {
+        URI input = new URI("test://localhost:100000/test_service");
+        this.thrown.expect(IllegalArgumentException.class);
+        new ConsulNameResolverProvider().validateInputURI(input);
     }
 
     @Test
-    public void splitQueryWithDC() throws Exception {
-        URI input = new URI("consul://localhost:1234/test_service?dc=dc1");
-        Map<String, List<String>> result = new ConsulNameResolverProvider().splitQuery(input);
-
-        assertEquals(1, result.keySet().size());
-        assertEquals(1, result.get("dc").size());
-    }
-
-    @Test
-    public void splitQueryWithTag() throws Exception {
-        URI input = new URI("consul://localhost:1234/test_service?tag=foo");
-        Map<String, List<String>> result = new ConsulNameResolverProvider().splitQuery(input);
-
-        assertEquals(1, result.keySet().size());
-        assertEquals(1, result.get("tag").size());
-    }
-
-    @Test
-    public void splitQueryWithTags() throws Exception {
-        URI input = new URI("consul://localhost:1234/test_service?tag=foo&tag=bar&tag=baz");
-        Map<String, List<String>> result = new ConsulNameResolverProvider().splitQuery(input);
-
-        assertEquals(1, result.keySet().size());
-        assertEquals(3, result.get("tag").size());
-    }
-
-    @Test
-    public void splitQueryWithDCandTags() throws Exception {
-        URI input = new URI("consul://localhost:1234/test_service?dc=dc1&tag=foo&tag=bar&tag=baz");
-        Map<String, List<String>> result = new ConsulNameResolverProvider().splitQuery(input);
-
-        assertEquals(2, result.keySet().size());
-        assertEquals(1, result.get("dc").size());
-        assertEquals(3, result.get("tag").size());
+    public void testSanitizeInputBadService() throws Exception {
+        URI input = new URI("test://localhost:1234/");
+        this.thrown.expect(IllegalArgumentException.class);
+        new ConsulNameResolverProvider().validateInputURI(input);
     }
 
     @Test
     public void testSanitizeInput() throws Exception {
         URI input = new URI("consul://localhost:1234/test_service");
-        ConsulQueryParameter params = new ConsulNameResolverProvider().sanitizeInput(input);
+        ConsulQueryParameter params = new ConsulNameResolverProvider().validateInputURI(input);
 
         assertFalse(params.datacenter.isPresent());
         assertFalse(params.tags.isPresent());
         assertTrue(params.consulAddress.isPresent());
-        assertEquals("localhost:1234", params.consulAddress.get());
-        assertEquals("test_service", params.service);
+        assertThat("localhost:1234", is(equalTo(params.consulAddress.get())));
+        assertThat("test_service", is(equalTo(params.service)));
     }
 
     @Test
     public void testSanitizeInputWithDC() throws Exception {
         URI input = new URI("consul://localhost:1234/test_service?dc=dc1");
-        ConsulQueryParameter params = new ConsulNameResolverProvider().sanitizeInput(input);
+        ConsulQueryParameter params = new ConsulNameResolverProvider().validateInputURI(input);
 
         assertTrue(params.datacenter.isPresent());
-        assertEquals("dc1", params.datacenter.get());
+        assertThat("dc1", is(equalTo(params.datacenter.get())));
         assertFalse(params.tags.isPresent());
         assertTrue(params.consulAddress.isPresent());
-        assertEquals("localhost:1234", params.consulAddress.get());
-        assertEquals("test_service", params.service);
+        assertThat("localhost:1234", is(equalTo(params.consulAddress.get())));
+        assertThat("test_service", is(equalTo(params.service)));
     }
 
     @Test
     public void testSanitizeInputWithTags() throws Exception {
         URI input = new URI("consul://localhost:1234/test_service?tag=foo&tag=bar&tag=baz");
-        ConsulQueryParameter params = new ConsulNameResolverProvider().sanitizeInput(input);
+        ConsulQueryParameter params = new ConsulNameResolverProvider().validateInputURI(input);
 
         assertFalse(params.datacenter.isPresent());
         assertTrue(params.tags.isPresent());
-        assertTrue(params.tags.get().contains("foo"));
-        assertTrue(params.tags.get().contains("bar"));
-        assertTrue(params.tags.get().contains("baz"));
+        assertThat(params.tags.get(), containsInAnyOrder("foo", "bar", "baz"));
         assertTrue(params.consulAddress.isPresent());
-        assertEquals("localhost:1234", params.consulAddress.get());
-        assertEquals("test_service", params.service);
+        assertThat("localhost:1234", is(equalTo(params.consulAddress.get())));
+        assertThat("test_service", is(equalTo(params.service)));
     }
 
     @Test
     public void testSanitizeInputWithDCandTags() throws Exception {
         URI input = new URI("consul://localhost:1234/test_service?dc=dc1&tag=foo&tag=bar&tag=baz");
-        ConsulQueryParameter params = new ConsulNameResolverProvider().sanitizeInput(input);
+        ConsulQueryParameter params = new ConsulNameResolverProvider().validateInputURI(input);
 
         assertTrue(params.datacenter.isPresent());
-        assertEquals("dc1", params.datacenter.get());
+        assertThat("dc1", is(equalTo(params.datacenter.get())));
         assertTrue(params.tags.isPresent());
-        assertTrue(params.tags.get().contains("foo"));
-        assertTrue(params.tags.get().contains("bar"));
-        assertTrue(params.tags.get().contains("baz"));
+        assertThat(params.tags.get(), containsInAnyOrder("foo", "bar", "baz"));
         assertTrue(params.consulAddress.isPresent());
-        assertEquals("localhost:1234", params.consulAddress.get());
-        assertEquals("test_service", params.service);
+        assertThat("localhost:1234", is(equalTo(params.consulAddress.get())));
+        assertThat("test_service", is(equalTo(params.service)));
     }
 }
