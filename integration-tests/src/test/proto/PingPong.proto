@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package io;
+
+import "google/protobuf/descriptor.proto";
+
+option java_package = "io.datanerds.grpc.integrationtests";
+option java_outer_classname = "PingPongProto";
+
+
+service PingPong {
+    rpc PingPong (Ping) returns (Pong) {
+    }
+}
+
+message Ping {
+    string ping = 1;
+}
+
+message Pong {
+    string pong = 1;
+}
