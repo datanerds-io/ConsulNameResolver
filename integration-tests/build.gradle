@@ -1,4 +1,4 @@
 apply plugin: 'java'
 dependencies {
-    testCompile([project(":consulresolver")])
+    testCompile([project(":consulnameresolver")])
 }
