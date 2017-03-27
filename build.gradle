@@ -96,6 +96,12 @@ apply plugin: 'io.codearte.nexus-staging'
 
 
 if (project.hasProperty('staging')) {
+
+    nexusStaging {
+        username = ossrhUser
+        password = ossrhPassword
+    }
+
     project(":consulnameresolver") {
         apply plugin: 'signing'
         apply plugin: 'maven'
@@ -151,7 +157,3 @@ if (project.hasProperty('staging')) {
     }
 }
 
-nexusStaging {
-    username = ossrhUser
-    password = ossrhPassword
-}
