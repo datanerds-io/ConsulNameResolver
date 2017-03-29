@@ -11,7 +11,7 @@ if ( [ "$DO_DEPLOYMENT" == "yes" ] ); then
     fi
     echo "Setting version to $VERSION"
 
-    gradle clean build javadocJar sourcesJar uploadArchives closeAndPromoteRepository -Pversion="$VERSION" -Pstaging
+    gradle clean build javadocJar sourcesJar uploadArchives closeRepository -Pversion="$VERSION" -Pstaging
 
     STATUS=$?
     if [ "$STATUS" -eq 0 ]; then
