@@ -252,14 +252,12 @@ public class ConsulNameResolverTest {
         AgentClient agentClient = consul.agentClient();
         agentClient.register(servicePort, 60L, serviceName, serviceId, tags);
         agentClient.pass(serviceId);
-        consul.destroy();
     }
 
     private boolean isConsulServiceRegistered(int consulPort, String serviceId) {
         Consul consul = Consul.builder().withHostAndPort(HostAndPort.fromParts("localhost", consulPort)).build();
         AgentClient agentClient = consul.agentClient();
         boolean isRegistered = agentClient.isRegistered(serviceId);
-        consul.destroy();
         return isRegistered;
     }
 
@@ -268,7 +266,6 @@ public class ConsulNameResolverTest {
         Consul consul = Consul.builder().withHostAndPort(HostAndPort.fromParts("localhost", consulPort)).build();
         AgentClient agentClient = consul.agentClient();
         agentClient.deregister(serviceId);
-        consul.destroy();
     }
 
 }

@@ -51,7 +51,6 @@ public class ConsulNameResolver extends NameResolver {
 
     @Override
     public void shutdown() {
-        this.consul.destroy();
     }
 
     @Override
